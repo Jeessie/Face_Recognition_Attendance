@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+    <style>
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .status-true {
+            color: green;
+            font-weight: bold;
+        }
+        .status-false {
+            color: red;
+            font-weight: bold;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <ul>
+            <div id="greeting">{{ current_user.name }}老师，您好！</div>
+            <li class="opt"><a href="{{ url_for('teacher_dashboard') }}">首页</a></li>
+            <li class="opt"><a href="{{ url_for('mycourse') }}">我的课程</a></li>
+            <li class="opt"><a href="{{ url_for('attendance') }}">拍照考勤</a></li>
+            <li class="opt"><a href="{{ url_for('attendance_management') }}">考勤情况</a></li>
+            <a id="out" href="{{ url_for('logout') }}">Logout</a>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="container mt-3">
+            <h2>考勤情况</h2>
+            <div class="table-responsive" style="height: 400px; overflow-y: scroll;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>课程名称</th>
+                            <th>学生姓名</th>
+                            <th>考勤结果</th>
+                            <th>考勤时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.course_name }}</td>
+                            <td>{{ result.student_name }}</td>
+                             <td class="{{ 'status-true' if result.attendance_result else 'status-false' }} attendance-result">
+                                {{ '出勤' if result.attendance_result else '缺勤' }}
+                            </td>
+                            <td>{{ result.attendance_time }}</td>
+                            <td>
+                                <button class="btn btn-sm bg-warning text-dark" data-attendance-id="{{ result.id }}">修改结果</button>
+                                <button class="btn btn-info btn-sm" data-attendance-id="{{ result.id }}">删除</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+         <!-- Modify Attendance Modal -->
+        <div class="modal fade" id="modifyAttendanceModal" tabindex="-1" aria-labelledby="modifyAttendanceModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modifyAttendanceModalLabel">修改考勤结果</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="modifyAttendanceForm">
+                            <input type="hidden" id="attendanceId" name="attendance_id">
+                            <div class="mb-3">
+                                <label for="attendanceResult" class="form-label">考勤结果</label>
+                                <select id="attendanceResult" name="attendance_result" class="form-select">
+                                    <option value="true">出勤</option>
+                                    <option value="false">缺勤</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br/>
+        <label for="course_name" class="form-label">课程考勤概览：</label>
+        <select id="courseSelect" onchange="updateCharts()" class="form-select">
+            <option value="">Select a Course</option>
+            {% for course in courses %}
+            <option value="{{ course.course_id }}">{{ course.course_name }} ({{course.semester}})</option>
+            {% endfor %}
+        </select>
+
+           <div class="chart-container">
+               <div class="chart">
+                   <canvas id="attendanceBarChart"></canvas>
+               </div>
+               <div class="chart">
+                   <canvas id="attendancePieChart"></canvas>
+               </div>
+           </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        // 删除按钮逻辑
+        document.querySelectorAll('.btn-info').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var attendanceId = this.getAttribute('data-attendance-id');
+                fetch(`/delete_attendance/${attendanceId}`, {
+                    method: 'POST'
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          this.closest('tr').remove();
+                          Toastify({
+                              text: data.message,
+                              duration: 3000,
+                              close: true,
+                              gravity: "top",
+                              position: "right",
+                              backgroundColor: "green",
+                              stopOnFocus: true,
+                          }).showToast();
+                      } else {
+                          Toastify({
+                              text: data.message,
+                              duration: 3000,
+                              close: true,
+                              gravity: "top",
+                              position: "right",
+                              backgroundColor: "red",
+                              stopOnFocus: true,
+                          }).showToast();
+                      }
+                  });
+            });
+        });
+
+        // 修改结果按钮逻辑
+        document.querySelectorAll('.bg-warning').forEach(function(button) {
+            button.addEventListener('click', function() {
+                console.log('Modify button clicked');
+                var attendanceId = this.getAttribute('data-attendance-id');
+                var attendanceResult = this.closest('tr').querySelector('.status-true, .status-false').textContent.trim() === '出勤' ? 'true' : 'false';
+
+                document.getElementById('attendanceId').value = attendanceId;
+                document.getElementById('attendanceResult').value = attendanceResult;
+
+                console.log('Submitting attendance ID:', attendanceId); // 添加日志
+                console.log('Submitting attendance result:', attendanceResult); // 添加日志
+
+                var modifyAttendanceModal = new bootstrap.Modal(document.getElementById('modifyAttendanceModal'));
+                modifyAttendanceModal.show();
+            });
+        });
+
+        // 提交修改结果
+        document.getElementById('modifyAttendanceForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            console.log('Modify form submitted');
+            var attendanceId = document.getElementById('attendanceId').value;
+            var attendanceResult = document.getElementById('attendanceResult').value;
+
+            fetch(`/modify_attendance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ attendance_id: attendanceId, attendance_result: attendanceResult })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      var row = document.querySelector(`button[data-attendance-id='${attendanceId}']`).closest('tr');
+                      var resultCell = row.querySelector('.attendance-result');
+                      console.log('Result Cell:', resultCell); // 添加日志
+                  if (resultCell) {
+                      resultCell.textContent = attendanceResult === 'true' ? '出勤' : '缺勤';
+                      resultCell.className = attendanceResult === 'true' ? 'status-true attendance-result' : 'status-false attendance-result';
+                  } else {
+                      console.error('Result cell not found');
+                  }
+                      {#resultCell.textContent = attendanceResult === 'true' ? '出勤' : '缺勤';#}
+                      {#resultCell.className = attendanceResult === 'true' ? 'status-true attendance-result' : 'status-false attendance-result';#}
+
+                      Toastify({
+                          text: data.message,
+                          duration: 3000,
+                          close: true,
+                          gravity: "top",
+                          position: "right",
+                          backgroundColor: "green",
+                          stopOnFocus: true,
+                      }).showToast();
+                  } else {
+                      Toastify({
+                          text: data.message,
+                          duration: 3000,
+                          close: true,
+                          gravity: "top",
+                          position: "right",
+                          backgroundColor: "red",
+                          stopOnFocus: true,
+                      }).showToast();
+                  }
+                  var modifyAttendanceModal = bootstrap.Modal.getInstance(document.getElementById('modifyAttendanceModal'));
+                  modifyAttendanceModal.hide();
+              });
+        });
+    });
+        function updateCharts() {
+            var courseId = document.getElementById('courseSelect').value;
+            if (courseId) {
+                fetch(`/api/attendance_counts/${courseId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // 更新柱状图逻辑
+                        updateBarChart(data);
+                        {#// 更新饼状图逻辑#}
+                        {#updatePieChart(data);#}
+                    })
+                    .catch(error => console.error('Error loading the attendance data:', error));
+            }
+        }
+        function updateBarChart(data) {
+            var labels = data.map(item => item.time);
+            var counts = data.map(item => item.count);
+            var barChartData = {
+                labels: labels,
+                datasets: [{
+                    label: '考勤人数',
+                    data: counts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            };
+            var ctx = document.getElementById('attendanceBarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: barChartData,
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+    </script>
+
+</body>
+</html>
