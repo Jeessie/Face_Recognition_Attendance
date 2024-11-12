@@ -1,7 +1,7 @@
 # Face-Recognition
 Developed an intelligent attendance management system using face recognition technology to identify students in group photos, logging absentee names and syncing data to a database. It utilizes MySql to store data, employs Flask framework, and uses InsightFace for face detection and recognition, allowing administrators and teachers in universities to manage class attendance conveniently through login for operations
 
-* 系统主页
+* 系统主页</br>
 <img width="416" alt="image" src="https://github.com/user-attachments/assets/cf2f384a-89f3-402c-9938-441c0303bcd0"></br>
 * 课程管理模块</br>
 <img width="416" alt="image" src="https://github.com/user-attachments/assets/db474c0b-6378-4047-9fd1-29911d6760b6"><img width="414" alt="image" src="https://github.com/user-attachments/assets/2171f881-4e29-4278-8762-8bc49a2fe7e8"></br>
@@ -33,5 +33,8 @@ Developed an intelligent attendance management system using face recognition tec
 * Upload_images/images 均为用于测试的合照（上传至前端网页的借口）
 
 # Running
-* 运行app.py,点击网页进入系统
+* 运行app.py,点击网页进入系统</br>
 <img width="741" alt="1731422786635" src="https://github.com/user-attachments/assets/59357214-bf5f-49ef-83c5-7d69e72b3178">
+
+
+
