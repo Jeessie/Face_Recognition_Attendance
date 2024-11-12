@@ -6,7 +6,7 @@ Developed an intelligent attendance management system using face recognition tec
 * 课程管理模块</br>
 <img width="416" alt="image" src="https://github.com/user-attachments/assets/db474c0b-6378-4047-9fd1-29911d6760b6"><img width="414" alt="image" src="https://github.com/user-attachments/assets/2171f881-4e29-4278-8762-8bc49a2fe7e8"></br>
 * 选课管理模块</br>
-<img width="416" alt="image" src="https://github.com/user-attachments/assets/03324a74-20c2-4286-979b-051c1bea7b81"><img width="416" alt="image" src="https://github.com/user-attachments/assets/a14856c6-add4-4cfd-888f-9acd774e9c2b"></br>
+<img width="416" alt="image" src="https://github.com/user-attachments/assets/a8df0977-b1bf-4acc-8e6c-67c8bb655e1d"><img width="416" alt="image" src="https://github.com/user-attachments/assets/a14856c6-add4-4cfd-888f-9acd774e9c2b"></br>
 * 拍照考勤&考勤管理模块</br>
 <img width="416" alt="image" src="https://github.com/user-attachments/assets/1f94c1f1-a4c9-472c-a036-d90c68401c14"><img width="416" alt="image" src="https://github.com/user-attachments/assets/41353768-e505-41ae-a8d0-264536575da8"><img width="414" alt="image" src="https://github.com/user-attachments/assets/dfcf1ee7-e5d7-4d98-b1d7-59e09ebeaa28"></br>
 * 管理员信息管理模块</br>
